@@ -4,6 +4,12 @@
 #include <unistd.h>
 #include <iostream>
 
+// 1. socket()
+// 2. bind()
+// 3. listen()
+// 4. accept()
+// 5. read()/write()
+
 #define SOCKET_PATH "/tmp/unix_socket_demo"
 
 int main(){
