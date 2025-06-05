@@ -11,9 +11,7 @@ $(BUILDDIR)/EC4: main.cpp $(BUILDDIR)/read $(BUILDDIR)/write | $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) -DEC4 $< -o $@
 
 $(BUILDDIR)/EC%: main.cpp | $(BUILDDIR)
-	@if ["$*" != "EC4"]; then \
-		$(CXX) $(CXXFLAGS) -DEC$* $< -o $@\
-	fi
+	$(CXX) $(CXXFLAGS) -DEC$* $< -o $@
 
 $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
