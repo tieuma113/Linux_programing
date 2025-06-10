@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -std=c++17
+CXXFLAGS = -Wall -std=c++17 -g
 BUILDDIR = build
 
 EC_LIST := $(shell grep -o 'EC[0-9]\+' main.cpp | sort -u)
