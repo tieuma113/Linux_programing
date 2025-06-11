@@ -10,7 +10,7 @@
 #include <vector>
 #include "RingBuffer.h"
 
-constexpr int LOOP_VALUE = 100;
+constexpr int LOOP_VALUE = 10000;
 constexpr const char* SHM_NAME = "/shm_buffer";
 constexpr const char* SEM_MUTEX = "/sem_mutex";
 constexpr const char* SEM_FULL = "/sem_full";
@@ -92,7 +92,7 @@ int create_consumer(RingBuffer* buf, sem_t* sem_mutex, sem_t* sem_empty, sem_t* 
 }
 
 int main(){
-    
+    signal(SIGINT, handle_sigint); // Gán handler Ctrl+C
     //Tạo shared memory
     int shm_fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0666);
     //Khởi tạo size cho shared memory
@@ -116,7 +116,6 @@ int main(){
     //Tạo process consumer
     int consumer = create_consumer(buf, sem_mutex, sem_empty, sem_full);
 
-    signal(SIGINT, handle_sigint); // Gán handler Ctrl+C
     //Wait process con
     waitpid(producer1, nullptr, 0);
     waitpid(producer2, nullptr, 0);
