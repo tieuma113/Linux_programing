@@ -62,7 +62,7 @@ int create_producer(RingBuffer* buf, sem_t* sem_mutex, sem_t* sem_empty, sem_t* 
             sem_post(sem_mutex);
             sem_post(sem_full);
         } 
-        _exit(1);
+        _exit(0);
     }
     CHILD_PROCESES.push_back(pid);
     return pid;
@@ -85,7 +85,7 @@ int create_consumer(RingBuffer* buf, sem_t* sem_mutex, sem_t* sem_empty, sem_t* 
             sem_post(sem_mutex);
             sem_post(sem_empty);
         } 
-        _exit(1);
+        _exit(0);
     }
     CHILD_PROCESES.push_back(pid);
     return pid;
@@ -94,33 +94,41 @@ int create_consumer(RingBuffer* buf, sem_t* sem_mutex, sem_t* sem_empty, sem_t* 
 int main(){
     signal(SIGINT, handle_sigint); // Gán handler Ctrl+C
     //Tạo shared memory
-    int shm_fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0666);
+    shm_fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0666);
     //Khởi tạo size cho shared memory
     if (shm_fd == -1 || ftruncate(shm_fd, sizeof(RingBuffer))) {
         perror("create shared memory fail");
         return 1;
     }
     //Map shared memory
-    void* shm_ptr = mmap(nullptr, sizeof(RingBuffer), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd,0);
+    shm_ptr = mmap(nullptr, sizeof(RingBuffer), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd,0);
+    if (shm_ptr == MAP_FAILED) {
+        perror("mmap fail");
+        return 1;
+    }
     RingBuffer* buf = static_cast<RingBuffer*>(shm_ptr);
     new (buf) RingBuffer;
     //Tạo semaphore
-    sem_t* sem_mutex = sem_open(SEM_MUTEX, O_CREAT, 0666, 1);
-    sem_t* sem_full = sem_open(SEM_FULL, O_CREAT, 0666, 0);
-    sem_t* sem_empty = sem_open(SEM_EMPTY, O_CREAT, 0666, RingBuffer::BUF_SIZE);
+    sem_mutex = sem_open(SEM_MUTEX, O_CREAT, 0666, 1);
+    sem_full = sem_open(SEM_FULL, O_CREAT, 0666, 0);
+    sem_empty = sem_open(SEM_EMPTY, O_CREAT, 0666, RingBuffer::BUF_SIZE);
+    if (sem_mutex == SEM_FAILED || sem_full == SEM_FAILED || sem_empty == SEM_FAILED) {
+        perror("sem_open fail");
+        handle_sigint(1);
+    }
 
     //Tạo process producer
-    int producer1 = create_producer(buf, sem_mutex, sem_empty, sem_full);
-    int producer2 = create_producer(buf, sem_mutex, sem_empty, sem_full);
-    int producer3 = create_producer(buf, sem_mutex, sem_empty, sem_full);
+    create_producer(buf, sem_mutex, sem_empty, sem_full);
+    create_producer(buf, sem_mutex, sem_empty, sem_full);
+    create_producer(buf, sem_mutex, sem_empty, sem_full);
     //Tạo process consumer
-    int consumer = create_consumer(buf, sem_mutex, sem_empty, sem_full);
+    create_consumer(buf, sem_mutex, sem_empty, sem_full);
 
     //Wait process con
-    waitpid(producer1, nullptr, 0);
-    waitpid(producer2, nullptr, 0);
-    waitpid(producer3, nullptr, 0);
-    waitpid(consumer, nullptr, 0);
+    for(auto it = CHILD_PROCESES.begin(); it != CHILD_PROCESES.end(); ++it){
+        waitpid(*it, nullptr, 0);
+        CHILD_PROCESES.erase(it);
+    }
     
     //Đóng semaphore
     sem_close(sem_mutex);
