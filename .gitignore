@@ -12,7 +12,7 @@
 
 # Ignore vscode file
 .vscode/
-*/build/
+build/
 
 # Ignore compiled binaries
 *.exe
