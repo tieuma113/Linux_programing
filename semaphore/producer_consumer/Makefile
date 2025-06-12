@@ -13,9 +13,6 @@ all: $(TARGET)
 app: $(SOURCE) $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) $(SOURCE) -o $(BUILDDIR)/$@
 
-$%: %.cpp $(BUILDDIR)
-	$(CXX) $(CXXFLAGS) $< -o $@
-
 $(BUILDDIR):
 	mkdir -p $@
 
